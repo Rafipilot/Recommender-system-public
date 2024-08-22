@@ -7,6 +7,7 @@ Thank you for your curiosity!
 import time
 import sys
 import subprocess
+from config import GITHUB_PAT 
 
 ## // Basic Recommender  -- Reference Design #0
 # 
@@ -22,7 +23,7 @@ try:
 
 # This block executes only on the first run when your package isn't installed
 except ModuleNotFoundError as e:
-  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.session_state.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
+  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
   # wait for subprocess to install package before running your actual code below
   time.sleep(90)
 
