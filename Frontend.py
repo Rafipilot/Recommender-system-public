@@ -2,6 +2,7 @@
 import platform
 import datetime 
 import re
+import time
 
 # 3rd party
 import streamlit as st
@@ -15,6 +16,9 @@ from bs4 import BeautifulSoup
 from pytube import YouTube
 import numpy as np
 import config
+import sys
+import subprocess
+
 
 #my modules/ local
 from Main import Arch
@@ -39,9 +43,17 @@ st.session_state.pleasure_percentage = 0
 #st.session_state.training_history = None
 
 
+try:
+  # replace "yourpackage" with the package you want to import
+  import ao_core
 
+# This block executes only on the first run when your package isn't installed
+except ModuleNotFoundError as e:
+  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.session_state.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
+  # wait for subprocess to install package before running your actual code below
+  time.sleep(90)
 
-
+import ao_core as ao
 
 
 if "agent" not in st.session_state:
