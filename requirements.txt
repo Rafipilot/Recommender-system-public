@@ -1,11 +1,11 @@
-streamlit==1.35.0
+
 beautifulsoup4==4.12.3
 google_api_python_client==2.125.0
 numpy==1.21.6
-git+https://github.com/aolabsai/ao_core.git
+git+https://${GITHUB_PAT}@github.com/aolabsai/ao_core.git
 openai==1.42.0
 pytube==15.0.0
 Requests==2.32.3
-
+streamlit==1.35.0
 youtube_transcript_api==0.6.2
 
