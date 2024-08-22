@@ -1,13 +1,9 @@
-
+ao_core==0.1.2
 beautifulsoup4==4.12.3
 google_api_python_client==2.125.0
 numpy
-
-config
-
 openai==1.42.0
 pytube==15.0.0
 Requests==2.32.3
 streamlit==1.35.0
 youtube_transcript_api==0.6.2
-
