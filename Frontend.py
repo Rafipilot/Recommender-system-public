@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 from pytube import YouTube
 import numpy as np
-import config
+#import config
 import sys
 import subprocess
 
@@ -31,8 +31,8 @@ st.set_page_config(page_title="DemoRS", layout="wide")
 
 running = False
 counter = 0
-openai.api_key = config.openai
-GoogleApiKey = config.GoogleApiKey
+openai.api_key = st.secrets.openai
+GoogleApiKey = st.secrets.GoogleApiKey
 youtube = build('youtube', 'v3', developerKey=GoogleApiKey)
 
 
@@ -49,7 +49,7 @@ try:
 
 # This block executes only on the first run when your package isn't installed
 except ModuleNotFoundError as e:
-  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.session_state.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
+  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
   # wait for subprocess to install package before running your actual code below
   time.sleep(90)
 
