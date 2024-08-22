@@ -3,7 +3,7 @@ beautifulsoup4==4.12.3
 google_api_python_client==2.125.0
 numpy==1.21.6
 
-git+https://Rafipilot:<GITHUB_PAT>@github.com/aolabsai/ao_core.git
+git+<GITHUB_PAT>@github.com/aolabsai/ao_core.git
 
 openai==1.42.0
 pytube==15.0.0

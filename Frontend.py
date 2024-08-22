@@ -662,8 +662,8 @@ with main_col:
                 st.write(np.flip(st.session_state.training_history, 0))    
                 if len(st.session_state.training_history) != 0:
             
-                        st.session_state.pleasure_percentage = np.count_nonzero(st.session_state.training_history == "pleasure")/len(st.session_state.training_history)
-                        st.write("percentage of response which is pleasure: ",st.session_state.pleasure_percentage)
+                    st.session_state.pleasure_percentage = np.count_nonzero(st.session_state.training_history == "pleasure")/len(st.session_state.training_history)
+                    st.write("percentage of response which is pleasure: ",st.session_state.pleasure_percentage)
 
         else:
             pass
