@@ -17,22 +17,30 @@ import streamlit as st
 # Cutomize and upload this Arch to our API to create Agents: https://docs.aolabs.ai/reference/kennelcreate
 #
 try:
-    # replace "yourpackage" with the package you want to import
+    # Attempt to import the package
     import ao_core as ao
 
-# This block executes only on the first run when your package isn't installed
 except ModuleNotFoundError:
-    # Securely fetch the GitHub token
-    github_pat = st.secrets["GITHUB_PAT"]
+    # If not found, attempt to install the package
+    try:
+        github_pat = st.secrets["GITHUB_PAT"]
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", f"git+https://{github_pat}@github.com/aolabsai/ao_core"],
+            check=True,  # Ensures an error is raised for non-zero exit codes
+            capture_output=True,  # Capture output to debug if necessary
+            text=True  # Output as string instead of bytes
+        )
+        print(result.stdout)  # Optional: Print the standard output for debugging
+        print(result.stderr)  # Optional: Print the error output for debugging
 
-    # Use subprocess.run to install the package, ensuring it's installed before proceeding
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", f"git+https://{github_pat}@github.com/aolabsai/ao_core"],
-        check=True
-    )
+        # Try importing again after successful installation
+        import ao_core as ao
 
-    # Now try to import again after installation
-    import ao_core as ao
+    except subprocess.CalledProcessError as e:
+        print(f"Installation failed with error code {e.returncode}")
+        print(f"Command output: {e.output}")
+        print(f"Error output: {e.stderr}")
+        raise  # Re-raise the error after logging details
 
 
 description = "Basic Recommender System"
