@@ -17,19 +17,25 @@ import streamlit as st
 # Cutomize and upload this Arch to our API to create Agents: https://docs.aolabs.ai/reference/kennelcreate
 #
 try:
-  # replace "yourpackage" with the package you want to import
-  import ao_core
+    # replace "yourpackage" with the package you want to import
+    import ao_core as ao
 
 # This block executes only on the first run when your package isn't installed
-except ModuleNotFoundError as e:
-  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
-  # wait for subprocess to install package before running your actual code below
-  time.sleep(90)
+except ModuleNotFoundError:
+    # Securely fetch the GitHub token
+    github_pat = st.secrets["GITHUB_PAT"]
 
-import ao_core as ao
+    # Use subprocess.run to install the package, ensuring it's installed before proceeding
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", f"git+https://{github_pat}@github.com/aolabsai/ao_core"],
+        check=True
+    )
+
+    # Now try to import again after installation
+    import ao_core as ao
 
 
-description = "Basic Clam"
+description = "Basic Recommender System"
 
 #genre, length,  Fnf
 arch_i = [4,2,1]     
