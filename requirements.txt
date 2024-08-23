@@ -1,4 +1,4 @@
-
+ao_core==0.1.2
 beautifulsoup4==4.12.3
 google_api_python_client==2.125.0
 numpy
