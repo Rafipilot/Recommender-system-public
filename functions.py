@@ -2,6 +2,7 @@
 import platform
 import datetime 
 import re
+import random
 
 # 3rd party
 import streamlit as st
@@ -22,7 +23,10 @@ from preloaded_links import preloaded_links
 import config
 
 openai.api_key = config.openai
-GoogleApiKey = config.GoogleApiKey
+Google_api_list = [config.GoogleApiKey1, config.GoogleApiKey2]
+
+GoogleApiKey = ""
+
 
 def agentCall(input, pref): 
 
@@ -146,27 +150,25 @@ def recommenderVideo(genre, language, time, device, length, Type, Mood, FNF,  pr
     Type = Type.upper()
 
     if "PODCAST" in Type:
-        type = [0,0,0,1]
+        Type = [0,0,0,1]
     elif "REVIEW" in Type:
-        type = [0,0,1,0]
+        Type = [0,0,1,0]
     elif "NEWS" in Type:
-        type = [0,0,1,1]
+        Type = [0,0,1,1]
     elif "VIDEO ESSAY" in Type:
-        type = [0,1,0,0]
+        Type = [0,1,0,0]
     elif "SKIT" in Type:
-        type = [0,1,0,1]
+        Type = [0,1,0,1]
     elif "PRESENTATION" in Type:
-        type = [0,1,1,0]
+        Type = [0,1,1,0]
     elif "ENTERTAINMENT" in Type:
-        type = [1,1,1,1]
+        Type = [1,1,1,1]
     else:
         print("error not a classified response in type")
-        type = [0,0,0,0]  
+        Type = [0,0,0,0]  
 
 
     
-
-    Type = Type
 
     
     #st.write(time, FNF, Mood, Bgenre, type)
@@ -175,15 +177,11 @@ def recommenderVideo(genre, language, time, device, length, Type, Mood, FNF,  pr
     # Call agent
 
     if NUM == True:
-
         R = agentCall(INPUT, pref)
         if np.sum(R)>5:
             return True
         else:
             return False
-
-
-
     else:
         R = agentTrain(INPUT, pref)
 
@@ -282,6 +280,9 @@ def get_language(video_id):
 
    # Build the YouTube service
    try:
+        x = random.randint(0,1)
+        print("key getting used", x)
+        GoogleApiKey = Google_api_list[x]
         youtube = build('youtube', 'v3', developerKey=GoogleApiKey)
 
         # Request the video details
@@ -332,13 +333,11 @@ def retrain(pref):
             print("error in getting length",e)
             lengt = 0
 
-        lang = "en"
+        lang = "en"  # language hardcoded for now
         current_time = datetime.datetime.now().strftime("%H")
-        machine = platform.machine()
-                    #st.write(ID)
+        machine = platform.machine()  # useless to know cpu should be phone/pc
         transcript = get_transcript(ID)
         st.session_state.transcripts[st.session_state.links[(0)]] = transcript  # Save transcript
-                    #st.write("Summarizing")
         genre = GetGenre(transcript)
         Type =  GetType(transcript)
         mood =  st.session_state.mood_input

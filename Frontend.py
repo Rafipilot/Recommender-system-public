@@ -3,6 +3,7 @@ import platform
 import datetime 
 import re
 import time
+import random
 
 # 3rd party
 import streamlit as st
@@ -28,7 +29,7 @@ import config
 from functions import RV, retrain, get_youtube_video_id
 
 openai.api_key = config.openai
-GoogleApiKey = config.GoogleApiKey
+
 
 st.set_page_config(page_title="DemoRS", layout="wide")
 
@@ -36,11 +37,6 @@ running = False
 counter = 0
 
 
-
-try:
-    youtube = build('youtube', 'v3', developerKey=GoogleApiKey)
-except Exception as e:
-    pass
 
 
 st.session_state.recommendationInput = ""
