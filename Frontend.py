@@ -177,15 +177,12 @@ with vid_col:
 
                 st.session_state.likedislike.append("pain")
                 if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
-                    print("Retrain------------------------------------------------------------------------")
                     retrain(pref)  
-                    print("RV----------------------------------------------------------------------------")
                     RV(firstV, pref)
 
                 else:
                     print("First Vid")
                     retrain(pref) 
-                    print("RV----------------------------------------------------------------------------")
                     RV(firstV, pref)
 
 
@@ -219,15 +216,12 @@ with vid_col:
 
                 st.session_state.likedislike.append("pleasure")
                 if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
-                    print("Retrain------------------------------------------------------------------------")
                     retrain(pref)  
-                    print("RV----------------------------------------------------------------------------")
                     RV(firstV, pref)
 
                 else:
                     print("First Vid ")
                     retrain(pref) 
-                    print("RV----------------------------------------------------------------------------")
                     RV(firstV, pref)
 
 
@@ -259,13 +253,6 @@ with vid_col:
             running = False
 st.session_state.count = 0
 with main_col:
-        st.write("Select where to get the secrets from")
-        if st.button("Local"):
-            openai.api_key = config.openai
-            GoogleApiKey = config.GoogleApiKey
-        if st.button("Cloud"):
-            openai.api_key = st.secrets.openai
-            GoogleApiKey = st.secrets.GoogleApiKey
         if len(st.session_state.VR) != 0:
            # try:
             st.write("agent trained on ", len(st.session_state.Trained), " videos")
