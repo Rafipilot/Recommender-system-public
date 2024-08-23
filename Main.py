@@ -32,7 +32,7 @@ import ao_core as ao
 description = "Basic Recommender System"
 
 #genre, length,  Fnf
-arch_i = [4,2,1]     
+arch_i = [4,1]     
 arch_z = [10]           
 arch_c = []           
 connector_function = "full_conn"

@@ -562,20 +562,6 @@ with vid_col:
                 pref  = "d"
                 firstV = False
                 st.session_state.Trained.append(st.session_state.VR[0])
-                try:
-                    yt = YouTube(st.session_state.Trained[0])
-                    title = yt.title              
-                except Exception as e:  # backup incase pytube down
-                    print(e)
-                    response = requests.get(str(st.session_state.Trained[0]))
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    title = soup.title.string
-                    title = title.replace(" - YouTube", "")                      
-                if title  == "":  # if no title found then write
-                    st.session_state.count +=1
-                    title =("No title" + str(st.session_state.count))
-                #if title not in st.session_state.video_name:
-                st.session_state.video_name.append(title)
 
 
                 st.session_state.likedislike.append("pain")
