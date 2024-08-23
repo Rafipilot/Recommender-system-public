@@ -42,31 +42,18 @@ st.session_state.mood_input = ""
 st.session_state.pleasure_percentage = 0
 #st.session_state.training_history = None
 
+
 try:
-    # Attempt to import the package
-    import ao_core as ao
+  # replace "yourpackage" with the package you want to import
+  import ao_core
 
-except ModuleNotFoundError:
-    # If not found, attempt to install the package
-    try:
-        github_pat = st.secrets["GITHUB_PAT"]
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", f"git+https://{github_pat}@github.com/aolabsai/ao_core"],
-            check=True,  # Ensures an error is raised for non-zero exit codes
-            capture_output=True,  # Capture output to debug if necessary
-            text=True  # Output as string instead of bytes
-        )
-        print(result.stdout)  # Optional: Print the standard output for debugging
-        print(result.stderr)  # Optional: Print the error output for debugging
+# This block executes only on the first run when your package isn't installed
+except ModuleNotFoundError as e:
+  subprocess.Popen([f'{sys.executable} -m pip install git+https://:{st.secrets.GITHUB_PAT}@github.com/aolabsai/ao_core'], shell=True)
+  # wait for subprocess to install package before running your actual code below
+  time.sleep(90)
 
-        # Try importing again after successful installation
-        import ao_core as ao
-
-    except subprocess.CalledProcessError as e:
-        print(f"Installation failed with error code {e.returncode}")
-        print(f"Command output: {e.output}")
-        print(f"Error output: {e.stderr}")
-        raise  # Re-raise the error after logging details
+import ao_core as ao
 
 
 if "agent" not in st.session_state:
