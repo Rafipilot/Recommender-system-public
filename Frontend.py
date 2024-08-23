@@ -24,6 +24,7 @@ import subprocess
 from Main import Arch
 import ao_core as ao
 from preloaded_links import preloaded_links
+import config
 
 
 
@@ -31,9 +32,13 @@ st.set_page_config(page_title="DemoRS", layout="wide")
 
 running = False
 counter = 0
-openai.api_key = st.secrets.openai
-GoogleApiKey = st.secrets.GoogleApiKey
-youtube = build('youtube', 'v3', developerKey=GoogleApiKey)
+
+
+
+try:
+    youtube = build('youtube', 'v3', developerKey=GoogleApiKey)
+except Exception as e:
+    pass
 
 
 st.session_state.recommendationInput = ""
@@ -209,7 +214,7 @@ def recommenderVideo(genre, language, time, device, length, Type, Mood, FNF,  pr
     
     #st.write(time, FNF, Mood, Bgenre, type)
     
-    INPUT = Bgenre+ length+ FNF
+    INPUT = Bgenre+ FNF
     # Call agent
 
     if NUM == True:
@@ -557,6 +562,22 @@ with vid_col:
                 pref  = "d"
                 firstV = False
                 st.session_state.Trained.append(st.session_state.VR[0])
+                try:
+                    yt = YouTube(st.session_state.Trained[0])
+                    title = yt.title              
+                except Exception as e:  # backup incase pytube down
+                    print(e)
+                    response = requests.get(str(st.session_state.Trained[0]))
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    title = soup.title.string
+                    title = title.replace(" - YouTube", "")                      
+                if title  == "":  # if no title found then write
+                    st.session_state.count +=1
+                    title =("No title" + str(st.session_state.count))
+                #if title not in st.session_state.video_name:
+                st.session_state.video_name.append(title)
+
+
                 st.session_state.likedislike.append("pain")
                 if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
                     print("Retrain------------------------------------------------------------------------")
@@ -597,6 +618,8 @@ with vid_col:
                 print(st.session_state.VR[0])
                 firstV = False
                 st.session_state.Trained.append(st.session_state.VR[0])
+
+
                 st.session_state.likedislike.append("pleasure")
                 if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
                     print("Retrain------------------------------------------------------------------------")
@@ -639,6 +662,13 @@ with vid_col:
             running = False
 st.session_state.count = 0
 with main_col:
+        st.write("Select where to get the secrets from")
+        if st.button("Local"):
+            openai.api_key = config.openai
+            GoogleApiKey = config.GoogleApiKey
+        if st.button("Cloud"):
+            openai.api_key = st.secrets.openai
+            GoogleApiKey = st.secrets.GoogleApiKey
         if len(st.session_state.VR) != 0:
            # try:
             st.write("agent trained on ", len(st.session_state.Trained), " videos")
@@ -669,7 +699,11 @@ with main_col:
                 st.session_state.training_history[:, 0] = st.session_state.result
                 st.session_state.training_history[:, 1] = st.session_state.likedislike
                 st.session_state.training_history[:, 2] = st.session_state.Trained
-                st.session_state.training_history[:, 3] = st.session_state.video_name[:len(st.session_state.training_history)]
+                try:
+                    st.session_state.training_history[:, 3] = st.session_state.video_name[:len(st.session_state.training_history)]
+                except Exception as e:
+                    print(st.session_state.video_name)
+                    print(e)
 
                 st.write(np.flip(st.session_state.training_history, 0))    
                 if len(st.session_state.training_history) != 0:
