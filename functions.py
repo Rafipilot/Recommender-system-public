@@ -7,6 +7,7 @@ import random
 # 3rd party
 import streamlit as st
 import openai
+from openai import AsyncOpenAI
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 import datetime 
 import re
@@ -14,7 +15,7 @@ from googleapiclient.discovery import build
 from pytube import YouTube
 import numpy as np
 #import config
-
+import asyncio
 
 #my modules/ local
 from Main import Arch
@@ -26,6 +27,112 @@ openai.api_key = config.openai
 Google_api_list = [config.GoogleApiKey1, config.GoogleApiKey2]
 
 GoogleApiKey = ""
+client = AsyncOpenAI(api_key=openai.api_key)
+
+#local_genre = ""
+
+
+async def get_genre(text):
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo",  
+        messages=[
+            {"role": "system", "content": "give a one word answer"},
+            {"role": "user", "content": f"What is the genre in one of these options, not anything other than the ones given: Vlogs, Gaming, Educational, Tech Reviews, Comedy/Skits, Beauty & Fashion, Music, Fitness, Cooking, Travel, ASMR, Challenges/Pranks\n\n{text}"}
+        ],
+         max_tokens=5,
+        temperature=0.1
+    )
+    local_genre = response.choices[0].message.content
+    return local_genre 
+
+    # Get Fiction/Non-Fiction classification
+async def get_fnf(text):
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo",  
+        messages=[
+            {"role": "user", "content": f"Is this video Fiction or Non Fiction in one or two words?\n\n{text}"}
+        ],
+        max_tokens=10
+    )
+    local_FNF = response.choices[0].message.content
+    return local_FNF
+
+async def call_inputs(text):
+    batch = await asyncio.gather(get_fnf(text), get_genre(text))
+    local_fnf, local_genre = batch
+    return local_fnf, local_genre
+
+
+def llm_inputs():
+    print("running")
+    
+    ID = get_youtube_video_id(st.session_state.VR[0])
+    text = get_transcript(ID)
+    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    local_fnf, local_genre = loop.run_until_complete(call_inputs(text))
+    loop.close()
+
+
+
+    # Get video length
+    url = st.session_state.VR[0]
+    yt = YouTube(url)
+    try:
+        length = yt.length
+    except Exception as e:
+        print("error in getting length", e)
+        length = 0
+
+    length = round(length / 60, 2)
+    if length < 5:
+        length = [0, 0]
+    elif length >= 5 and length < 20:
+        length = [0, 1]
+    else:
+        length = [1, 1]
+
+    # Determine if Fiction or Non-Fiction
+    local_fnf.upper()
+    if local_fnf == "FICTON":
+        FNF = [1]
+    else:
+        FNF = [0]
+
+    # Map genre to binary representation
+    genre_map = {
+        "VLOGS": [0, 0, 0, 1],
+        "GAMING": [0, 0, 1, 0],
+        "EDUCATIONAL": [0, 0, 1, 1],
+        "TECH REVIEWS": [0, 1, 0, 0],
+        "COMEDY": [0, 1, 0, 1],
+        "SKITS": [0, 1, 0, 1],
+        "BEAUTY": [0, 1, 1, 0],
+        "FASHION": [0, 1, 1, 0],
+        "MUSIC": [0, 1, 1, 1],
+        "FITNESS": [1, 0, 0, 0],
+        "COOKING": [1, 0, 0, 1],
+        "TRAVEL": [1, 0, 1, 0],
+        "ASMR": [1, 0, 1, 1],
+        "CHALLENGES": [1, 1, 0, 0],
+        "PRANKS": [1, 1, 0, 0]
+    }
+    local_genre = genre_map.get(local_genre.upper(), [0, 0, 0, 0])
+
+    # Combine results into a single list
+    local_input_agent = local_genre + FNF + length
+
+    print("local input:", local_input_agent)
+
+    return local_input_agent
+
+
+
+
+
+
+
 
 
 def agentCall(input, pref): 
@@ -54,6 +161,8 @@ def agentTrain(input, pref):
         Cneg = True
         Cpos = False
 
+    print("input to agent in agent call:", input)
+
     st.session_state.agent.next_state(INPUT=input, Cpos=Cpos, Cneg=Cneg, print_result=False)
 
 
@@ -61,129 +170,19 @@ def agentTrain(input, pref):
 
 
 
-def recommenderVideo(genre, language, time, device, length, Type, Mood, FNF,  pref, NUM):   
-
-    
-
-    #Fiction/ non fiction to binary
-
-    length = round(length/60, 2)
-
-   # print(type(length))
-    try:
-        length = int(length)
-        if length<5:
-            length = [0,0]
-        if length>=5 and length<20:
-            length = [0,1]
-        else:
-            length = [1,1]
-        print(length)
-    except Exception:
-        pass
-    #length= [1,0]
-
-
-    FNF = str(FNF.upper)
-    if "FICTION" in FNF:
-        FNF = [1]
-    else:
-        FNF = [0]
-
-
-    #Time to bnary
-    time = int(time)
-    time = bin(time)[2:]
-
-    #Mood to binary#
-  
-    Mood = Mood.upper()
-    #Mood = str(Mood)
- 
-    if "FUNNY" in Mood:
-        Mood = [0,1]
-    elif "SERIOUS" in Mood:
-        Mood = [0,0]
-    elif "RANDOM" in Mood:
-        Mood = [1,0]
-    else:
-        print("error not a classified response in mood")
-        Mood = [1,1]
-
-    
-    
-
-    category = genre.upper()
-
-    if "VLOGS" in category:
-        binary_rep = [0,0,0,1]
-    elif "GAMING" in category:
-        binary_rep = [0,0,1,0]
-    elif "EDUCATIONAL" in category:
-        binary_rep = [0,0,1,1]
-    elif "TECH REVIEWS" in category:
-        binary_rep = [0,1,0,0]
-    elif "COMEDY" in category or "SKITS" in category:
-        binary_rep = [0,1,0,1]
-    elif "BEAUTY" in category or "FASHION" in category:
-        binary_rep = [0,1,1,0]
-    elif "MUSIC" in category:
-        binary_rep = [0,1,1,1]
-    elif "FITNESS" in category:
-        binary_rep = [1,0,0,0]
-    elif "COOKING" in category:
-        binary_rep = [1,0,0,1]
-    elif "TRAVEL" in category:
-        binary_rep = [1,0,1,0]
-    elif "ASMR" in category:
-        binary_rep = [1,0,1,1]
-    elif "CHALLENGES" in category or "PRANK" in category:
-        binary_rep = [1,1,0,0]
-    else:
-        print("error not a classified response in genre")
-        binary_rep = [0,0,0,0]
-
-    Bgenre=binary_rep
-
-
-
-    Type = Type.upper()
-
-    if "PODCAST" in Type:
-        Type = [0,0,0,1]
-    elif "REVIEW" in Type:
-        Type = [0,0,1,0]
-    elif "NEWS" in Type:
-        Type = [0,0,1,1]
-    elif "VIDEO ESSAY" in Type:
-        Type = [0,1,0,0]
-    elif "SKIT" in Type:
-        Type = [0,1,0,1]
-    elif "PRESENTATION" in Type:
-        Type = [0,1,1,0]
-    elif "ENTERTAINMENT" in Type:
-        Type = [1,1,1,1]
-    else:
-        print("error not a classified response in type")
-        Type = [0,0,0,0]  
-
-
-    
-
-    
-    #st.write(time, FNF, Mood, Bgenre, type)
-    
-    INPUT = Bgenre+ length +FNF
-    # Call agent
+def recommenderVideo(llm_input,  pref, NUM):   
 
     if NUM == True:
-        R = agentCall(INPUT, pref)
+        print("recommenderVideoInput:", llm_input)
+        R = agentCall(llm_input, pref)
         if np.sum(R)>5:
             return True
         else:
             return False
     else:
-        R = agentTrain(INPUT, pref)
+        print("input:",llm_input)
+
+        R = agentTrain(llm_input, pref)
 
 
 def GetType(text):
@@ -198,19 +197,6 @@ def GetType(text):
     summary = response.choices[0].message.content
     return summary
 
-def GetGenre(text):
-    response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",  
-        messages=[
-            {"role": "system", "content": "give a one word answer"},
-            {"role": "user", "content": f"what is the genre in one of these options not anything other than the ones given please nothing random just from the list given: Vlogs, Gaming ,Educational, Tech Reviews, Comedy/Skits, Beauty & Fashion, Music, Fitness, Cooking, Travel, ASMR , Challenges/Pranks\n\n{text}"}
-        ],
-        max_tokens=5,  # adjust based on how concise we want the summary
-        temperature=0.1  # Lower temperature for more deterministic output
-    )
-    summary = response.choices[0].message.content
-    return summary
-
 def GetMood(text):
     response = openai.chat.completions.create(
         model="gpt-3.5-turbo",  
@@ -221,21 +207,6 @@ def GetMood(text):
     )
     summary = response.choices[0].message.content
     return summary
-
-def GetFNF(text):   # get fiction/ non fiction
-    response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",  
-        messages=[
-            #{"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"Is this video Fiction or Non Fiction in one or two words \n\n{text}"}
-        ],
-        max_tokens=10  # adjust based on how concise we want the summary
-    )
-    summary = response.choices[0].message.content
-    return summary
-
-
-
 
 def get_transcript(video_id):
     try:
@@ -269,13 +240,7 @@ def get_youtube_video_id(url):
     if match:
         return match.group(6)
     return None
-
-    
-
-    
-
-
-                    
+                  
 def get_language(video_id):
 
    # Build the YouTube service
@@ -313,101 +278,43 @@ def get_language(video_id):
    except Exception as e:
 
     print(f"An unexpected error occurred in get lang: {e}")
-       
 
-
-
-        
-    
-
-def retrain(pref):
+def retrain(llm_input, pref):
 
     NUM = False
-    try:
-        ID = get_youtube_video_id(st.session_state.VR[(0)])
-        url = st.session_state.VR[(0)]
-        yt = YouTube(url)
-        try:
-            lengt = yt.length
-        except Exception as e:
-            print("error in getting length",e)
-            lengt = 0
 
-        lang = "en"  # language hardcoded for now
-        current_time = datetime.datetime.now().strftime("%H")
-        machine = platform.machine()  # useless to know cpu should be phone/pc
-        transcript = get_transcript(ID)
-        st.session_state.transcripts[st.session_state.links[(0)]] = transcript  # Save transcript
-        genre = GetGenre(transcript)
-        Type =  GetType(transcript)
-        mood =  st.session_state.mood_input
-        FNF =  GetFNF(transcript)
 
-        recommenderVideo(genre, lang, current_time, machine, lengt, Type, mood, FNF, pref, NUM)
-            #st.write(f"Summary for video ID {st.session_state.links[(i)]}:")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+
+    recommenderVideo(llm_input, pref, NUM)
+
 
 
       # would return true if it recommends
         
         
         
-def RV(firstV, pref):
-    const = 0
-    if firstV == True:
-        const = 0
-    else:
-        const = 1
+def RV(firstV, pref, llm_input):
     NUM = True
+    print("input in RV:", llm_input)
     
-    try:  
-        ID = get_youtube_video_id(st.session_state.VR[(const)])
-        url = st.session_state.VR[(const)]
-        yt = YouTube(url)
-        try:
-            lengt = yt.length
-        except Exception as e:
-            print("error in getting length",e)
-            lengt = 0
-        lang = "en"
-        current_time = datetime.datetime.now().strftime("%H")
-        machine = platform.machine()
 
-        transcript = get_transcript(ID)
-        st.session_state.transcripts[st.session_state.links[(0)]] = transcript  # Save transcript
-
-        genre = GetGenre(transcript)
-        Type =  GetType(transcript)
-        mood =  st.session_state.mood_input
-        FNF = GetFNF(transcript)
-
+    recommend = recommenderVideo(llm_input, pref, NUM)
         
-        st.session_state.recommendationInput = genre, FNF, lengt, lang, current_time, machine, Type, mood
+    st.session_state.recommendationInput = llm_input
 
-        recommend = recommenderVideo(genre, lang, current_time, machine, lengt, Type, mood, FNF, pref, NUM)  #
+       # recommend = recommenderVideo(genre, lang, current_time, machine, lengt, Type, mood, FNF, pref, NUM)  #
 
-        if  recommend:
+    if  recommend:
             #st.write("Recommended for you")
-            st.session_state.recommendationResult = "Recommended for you"
+        st.session_state.recommendationResult = "Recommended for you"
             
-            pass # do nothing as it has been recommended again in the retrain
-        else:
+        pass # do nothing as it has been recommended again in the retrain
+    else:
             #st.write("Not recommended for you")
-            st.session_state.recommendationResult = "Not recommended for you"
+        st.session_state.recommendationResult = "Not recommended for you"
             #st.session_state.VR.pop(0)   # if we only wanted to show the recommended vids then we would incude this line
         
-        if firstV:
-            pass
-        else:
-            st.session_state.result.append(st.session_state.recommendationResult)
-    except Exception as e:
-
-        print(f"An unexpected error occurred: {e}")
-        
-        genre = "UNKNOWN" 
-        Type = "UNKNOWN"
-        mood = "UNKNOWN"
-        FNF = "UNKNOWN"
-        lang = "UNKNOWN"
-        lengt = 0
+    if firstV:
+        pass
+    else:
+        st.session_state.result.append(st.session_state.recommendationResult)
