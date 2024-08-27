@@ -16,17 +16,19 @@ import requests
 from bs4 import BeautifulSoup
 from pytube import YouTube
 import numpy as np
+
+
 #import config
 import sys
 import subprocess
-
+import asyncio
 
 #my modules/ local
 from Main import Arch
 import ao_core as ao
 from preloaded_links import preloaded_links
 import config
-from functions import RV, retrain, get_youtube_video_id
+from functions import RV, retrain, get_youtube_video_id, llm_inputs
 
 openai.api_key = config.openai
 
@@ -38,14 +40,26 @@ counter = 0
 
 
 
-
+st.session_state.processed_videos = None
 st.session_state.recommendationInput = ""
 st.session_state.recommendationResult = ""
 st.session_state.mood_input = ""
 st.session_state.pleasure_percentage = 0
 #st.session_state.training_history = None
 
+async def display_shit():
 
+
+    st.write("Videos left in list:"+ str(len(st.session_state.VR)-1))
+    st.write("Input to agent( We are only using the first 3 inputs for the demo): ",st.session_state.recommendationInput)
+    st.write("Agent output: ", st.session_state.recommendationResult)
+
+            #st.write(st.session_state.VR[counter])
+    st.video(st.session_state.VR[0])    
+
+
+
+    
 try:
   # replace "yourpackage" with the package you want to import
   import ao_core
@@ -127,6 +141,7 @@ with main_col:
     #preloading of the links
     with preload_col:
         if  st.button("preload links", type="primary"):
+            #print(st.session_state.processed_videos)
             for i in range(len(preloaded_links)):
                 st.session_state.urls.append(preloaded_links[i-1])
                 vid = get_youtube_video_id(st.session_state.urls[i-1])
@@ -136,7 +151,11 @@ with main_col:
             
             for i in range(len(st.session_state.links)):
                 with vid_col:
-                    st.session_state.VR.append(st.session_state.urls[i-1])            
+                    st.session_state.VR.append(st.session_state.urls[i-1])    
+                    
+            print("call")
+            
+
 
 
     # Handle the RUN button
@@ -154,8 +173,12 @@ with main_col:
 
                     # retrain(pref)
                     firstV = True
-                    RV(firstV, pref)
-                    firstV = False
+                    #time.sleep(5)
+                    
+                    input = llm_inputs()
+                    input = llm_inputs()
+                    print("input after call to llm before RV (test):", input)
+                    RV(firstV, pref, input)
 
     
 with vid_col:
@@ -172,20 +195,28 @@ with vid_col:
 
 
                 st.session_state.likedislike.append("pain")
-                if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
-                    retrain(pref)  
-                    RV(firstV, pref)
+                if "C_dNt4UEVZQ" not in st.session_state.VR[0]:#
+                    input = llm_inputs()
+                    retrain(input, pref)  
+                    input = llm_inputs()
+                    print("input after call to llm before RV (test):", input)
+                    RV(firstV, pref, input)
+
 
                 else:
                     print("First Vid")
+                    input = llm_inputs()
                     retrain(pref) 
-                    RV(firstV, pref)
+                    input = llm_inputs()
+                    print("input after call to llm before RV (test):", input)
+                    RV(firstV, pref, input)
 
 
 
                 st.session_state.VR.pop(0)#
                 st.session_state.links.pop(0)
                 st.session_state.urls.pop(0)
+                
                 #st.session_state.transcripts.pop(0)
                 #assuming we would need to retrain here so calling agent function
         
@@ -212,17 +243,27 @@ with vid_col:
 
                 st.session_state.likedislike.append("pleasure")
                 if "C_dNt4UEVZQ" not in st.session_state.VR[0]:
-                    retrain(pref)  
-                    RV(firstV, pref)
+                    input = llm_inputs()
+                    retrain(input, pref)  
+                    input = llm_inputs()
+                    print("input after call to llm before RV (test):", input)
+                    RV(firstV, pref, input)
+
 
                 else:
                     print("First Vid ")
-                    retrain(pref) 
-                    RV(firstV, pref)
+                    input = llm_inputs()
+                    retrain(input, pref) 
+                    input = llm_inputs()
+                    print("input after call to llm before RV:", input)
+                    RV(input, pref, firstV)
 
 
 
                 st.session_state.VR.pop(0)
+                st.session_state.links.pop(0)
+                st.session_state.urls.pop(0)
+               
                 #assuming we would need to retrain here so calling agent function
         
                 counter = int(counter)
@@ -240,12 +281,7 @@ with vid_col:
       #  st.write(st.session_state.VR)
 
      
-            st.write("Videos left in list:"+ str(len(st.session_state.VR)-1))
-            st.write("Input to agent( We are only using the first 3 inputs for the demo): ",st.session_state.recommendationInput)
-            st.write("Agent output: ", st.session_state.recommendationResult)
-
-            #st.write(st.session_state.VR[counter])
-            st.video(st.session_state.VR[0])
+            asyncio.run(display_shit())
             running = False
 st.session_state.count = 0
 with main_col:
@@ -255,7 +291,7 @@ with main_col:
             st.write("Agent history:")
 
 
-#### very ducktape fix  getting everyvid name not nessacary
+
             for i in range(len(st.session_state.Trained)):
                 
                 try:
