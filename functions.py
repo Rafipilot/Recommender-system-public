@@ -31,7 +31,7 @@ client = AsyncOpenAI(api_key=openai.api_key)
 
 #local_genre = ""
 
-
+## call gpt
 async def get_genre(text):
     response = await client.chat.completions.create(
         model="gpt-3.5-turbo",  
@@ -57,12 +57,14 @@ async def get_fnf(text):
     local_FNF = response.choices[0].message.content
     return local_FNF
 
+
+
 async def call_inputs(text):
     batch = await asyncio.gather(get_fnf(text), get_genre(text))
     local_fnf, local_genre = batch
     return local_fnf, local_genre
 
-
+##encode to binary
 def llm_inputs():
     print("running")
     
@@ -134,7 +136,7 @@ def llm_inputs():
 
 
 
-
+#agent call to get response
 def agentCall(input, pref): 
 
     #st.session_state.agent.next_state( INPUT=input,Cpos=Cpos, Cneg=Cneg, print_result=True)
@@ -149,6 +151,7 @@ def agentCall(input, pref):
 
     return response
 
+#agent call to train agent 
 def agentTrain(input, pref):
 
     global Cpos
@@ -169,7 +172,7 @@ def agentTrain(input, pref):
 
 
 
-
+#decide when to call what
 def recommenderVideo(llm_input,  pref, NUM):   
 
     if NUM == True:
@@ -290,9 +293,7 @@ def retrain(llm_input, pref):
 
 
       # would return true if it recommends
-        
-        
-        
+              
 def RV(firstV, pref, llm_input):
     NUM = True
     print("input in RV:", llm_input)
