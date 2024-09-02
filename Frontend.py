@@ -24,7 +24,7 @@ import subprocess
 import asyncio
 
 #my modules/ local
-from Main import Arch
+from Arch import Arch
 import ao_core as ao
 from preloaded_links import preloaded_links
 import config
