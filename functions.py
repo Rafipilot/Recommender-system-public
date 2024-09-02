@@ -18,7 +18,7 @@ import numpy as np
 import asyncio
 
 #my modules/ local
-from Main import Arch
+from Arch import Arch
 import ao_core as ao
 from preloaded_links import preloaded_links
 import config
@@ -145,9 +145,6 @@ def agentCall(input, pref):
     st.session_state.agent.next_state( INPUT=input, print_result=False)
 
     response = st.session_state.agent.story[st.session_state.agent.state-1, st.session_state.agent.arch.Z__flat]
-
-
-
 
     return response
 
